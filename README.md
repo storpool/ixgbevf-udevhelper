@@ -58,13 +58,13 @@ eth2_vf1_VLAN=42
 eth3_vf0_VLAN=1000
 ```
 
-There is DEBUG variable that if set to anything will treiiger the udev helper script to log more info to syslog
+There is DEBUG variable that if set to anything will trigger the udev helper script to log more info to syslog.
 
 
 ### /etc/network/interfaces
 * create configuration for the VF interface
 
-Please note that the VF interfaces are managable after the pysical interface is up
+Please note that the VF interfaces are managable after the pysical interface is up.
 
 ---
 Copyright (c) 2015 StorPool Storage AD
