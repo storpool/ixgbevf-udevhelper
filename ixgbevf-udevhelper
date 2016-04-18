@@ -73,8 +73,8 @@ case "$ACTION" in
 		if [ "$DRIVER" = "ixgbe" ]; then
 			OIFS=$IFS
 			IFS=","
-			PCI_ARRAY=($PCI_SLOT_LIST)
-			PCI_NUMVFS=($PCI_NUMVFS_LIST)
+			PCI_ARRAY=(${PCI_SLOT_LIST//,/ })
+			PCI_NUMVFS=(${PCI_NUMVFS_LIST//,/ })
 			IFS=$OIFS
 			for i in ${!PCI_ARRAY[@]}; do
 				NUMVFS="${PCI_NUMVFS[i]}"
