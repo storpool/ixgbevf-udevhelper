@@ -31,12 +31,13 @@
 
 set -e
 
-PATH=/bin:/sbin:/usr/bin:/usr/sbin:$PATH
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin:$PATH
 
+# When called for ixgbevf kernel modulethe DRIVER variable is empty
+# so we are matching vendor and model id
 # Defaults
 VENDOR_ID="0x8086"
 MODEL_ID="0x10ed"
-VFNAME_TEMPLATE="_PFNAME__vf_VFID_"
 
 function splog()
 {
@@ -54,13 +55,18 @@ function getVirtfnId()
 
 function createVFNAME()
 {
+	VFNAME_TEMPLATE=${VFNAME_TEMPLATE:-_PFNAME__vf_VFID_}
 	VFNAME="${VFNAME_TEMPLATE//_PFNAME_/$PFNAME}"
 	VFNAME="${VFNAME//_VFID_/$VFID}"
 }
 
-[ -f "/etc/ixgbevf-udevhelper.conf" ] && source "/etc/ixgbevf-udevhelper.conf"
+if [ -f "/etc/ixgbevf-udevhelper.conf" ]; then
+	source "/etc/ixgbevf-udevhelper.conf"
+fi
 
-[ -n "$DEBUG" ] && splog "{$INTERFACE} DEVPATH=$DEVPATH"
+if [ -n "$DEBUG" ]; then
+	splog "{$INTERFACE} DEVPATH=$DEVPATH"
+fi
 
 case "$ACTION" in
 	add)
@@ -72,8 +78,12 @@ case "$ACTION" in
 			IFS=$OIFS
 			for i in ${!PCI_ARRAY[@]}; do
 				NUMVFS="${PCI_NUMVFS[i]}"
-				[ -n "$DEBUG" ] && splog "$i $PCI_SLOT_NAME PCI_SLOT ${PCI_ARRAY[i]} NUMVFS $NUMVFS"
-				[ "${PCI_ARRAY[i]}" != "$PCI_SLOT_NAME" ] && continue
+				if [ -n "$DEBUG" ]; then
+					splog "$i $PCI_SLOT_NAME PCI_SLOT ${PCI_ARRAY[i]} NUMVFS $NUMVFS"
+				fi
+				if [ "${PCI_ARRAY[i]}" != "$PCI_SLOT_NAME" ]; then
+					continue
+				fi
 				if [ -n "$NUMVFS" ] && [ "${NUMVFS//[[:digit:]]/}" = ""  ] ; then
 					splog "enabling $NUMVFS VF on PCI slot $PCI_SLOT_NAME"
 					echo "$NUMVFS" >"/sys/module/ixgbe/drivers/pci:ixgbe/$PCI_SLOT_NAME/sriov_numvfs"
@@ -81,20 +91,20 @@ case "$ACTION" in
 					splog "no PCI_NUMVFS set for $PCI_SLOT_NAME"
 				fi
 			done
-		# when called for ixgbevf the DRIVER variable is empty so we are matching vendor and model id
 		elif [ "$ID_VENDOR_ID" = "$VENDOR_ID" ] && [ "$ID_MODEL_ID" = "$MODEL_ID" ]; then
 			PFNAME="$(ls /sys/${DEVPATH}/../../physfn/net)"
 			VFID=`getVirtfnId $DEVPATH`
-#			VFNAME="${PFNAME}_vf$VFID"
 			createVFNAME
 			eval "VFVLAN=\${${VFNAME}_VLAN}"
 			VFMAC="$(</sys/${DEVPATH}/address)"
 			# validate vlan_id
 			if [ -n "$VFVLAN" ] && [ "${VFVLAN//[[:digit:]]/}" != ""  ] ; then
-				splog "VFVLAN=$VFVLAN for $VFNAME looks like not VLAN_ID"
-				VLAN=
+				splog "Warning! VFVLAN=$VFVLAN for $VFNAME looks like not VLAN_ID! Skipped vlan setup."
+				VFVLAN=
 			fi
-			[ -n "$DEBUG" ] && splog "PFNAME=$PFNAME VFNAME=$VFNAME${VFVLAN:+ VFVLAN=$VFVLAN}"
+			if [ -n "$DEBUG" ]; then
+				splog "PFNAME=$PFNAME VFNAME=$VFNAME${VFVLAN:+ VFVLAN=$VFVLAN}"
+			fi
 			# set VLAN and MAC filtering for the VF
 			ip link set "$PFNAME" vf "$VFID" mac ${VFMAC}${VFVLAN:+ vlan $VFVLAN} &>/dev/null
 			splog "ip link set $PFNAME vf $VFID mac ${VFMAC}${VFVLAN:+ vlan $VFVLAN} (ret:$?)"
