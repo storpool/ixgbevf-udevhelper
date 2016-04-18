@@ -38,11 +38,11 @@ Expandable variables:
 Default: VFNAME_TEMPLATE="_PFNAME__vf_VFID_"
 
 * List of PCI slots on which to enable VF
-Comma separated list of PCI_SLOT_NAMES
+Comma or space separated list of PCI_SLOT_NAMES
 PCI_SLOT_LIST="<PCI_SLOT_NAME>[,...]"
 
 * Number of VF interfaces to bring up.
-Comma separated list corresponding to each PCI_SLOT from above
+Comma or space separated list corresponding to each PCI_SLOT from above
 PCI_NUMVFS_LIST="<number>[,...]"
 
 * VLAN_ID for VF interface
@@ -64,7 +64,7 @@ There is DEBUG variable that if set to anything will trigger the udev helper scr
 ### /etc/network/interfaces
 * create configuration for the VF interface
 
-Please note that the VF interfaces are managable after the pysical interface is up.
+Please note that the VF interfaces are manageable after the physical interface is up.
 
 ---
 Copyright (c) 2015 StorPool Storage AD
