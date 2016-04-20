@@ -94,6 +94,12 @@ case "$ACTION" in
 			PFNAME="$(ls /sys/${DEVPATH}/../../physfn/net)"
 			VFID=`getVirtfnId $DEVPATH`
 			createVFNAME
+			if [ "$VFNAME" = "$INTERFACE" ]; then
+				if [ -n "$DEBUG" ]; then
+					splog "Skipping VF interface..."
+				fi
+				exit
+			fi
 			eval "VFVLAN=\${${VFNAME}_VLAN}"
 			VFMAC="$(</sys/${DEVPATH}/address)"
 			# validate vlan_id
