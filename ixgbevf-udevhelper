@@ -33,12 +33,6 @@ set -e
 
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin:$PATH
 
-# When called for ixgbevf kernel modulethe DRIVER variable is empty
-# so we are matching vendor and model id
-# Defaults
-VENDOR_ID="0x8086"
-MODEL_ID="0x10ed"
-
 function splog()
 {
 	logger -t "[$SEQNUM] ${0##*/}" "[$INTERFACE] $*"
@@ -64,8 +58,13 @@ if [ -f "/etc/ixgbevf-udevhelper.conf" ]; then
 	source "/etc/ixgbevf-udevhelper.conf"
 fi
 
+if [ "$DRIVER" = "" ]; then
+	DRIVER="$(readlink /sys/$DEVPATH/device/driver || true)"
+	DRIVER="${DRIVER##*/}"
+fi
+
 if [ -n "$DEBUG" ]; then
-	splog "{$INTERFACE} DEVPATH=$DEVPATH"
+	splog "DRIVER=$DRIVER DEVPATH=$DEVPATH"
 fi
 
 case "$ACTION" in
@@ -91,7 +90,7 @@ case "$ACTION" in
 					splog "no PCI_NUMVFS set for $PCI_SLOT_NAME"
 				fi
 			done
-		elif [ "$ID_VENDOR_ID" = "$VENDOR_ID" ] && [ "$ID_MODEL_ID" = "$MODEL_ID" ]; then
+		elif [ "$DRIVER" = "ixgbevf" ]; then
 			PFNAME="$(ls /sys/${DEVPATH}/../../physfn/net)"
 			VFID=`getVirtfnId $DEVPATH`
 			createVFNAME
