@@ -41,7 +41,7 @@ MODEL_ID="0x10ed"
 
 function splog()
 {
-	logger -t "[$SEQNUM] ${0##*/}" "$*"
+	logger -t "[$SEQNUM] ${0##*/}" "[$INTERFACE] $*"
 }
 
 function getVirtfnId()
