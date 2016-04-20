@@ -25,5 +25,6 @@
 # This file should be placed in /etc/udev/rules.d/
 #
 
-SUBSYSTEM=="pci",ACTION=="add",DRIVER=="ixgbe",RUN+="/lib/udev/ixgbevf-udevhelper"
+#SUBSYSTEM=="pci",ACTION=="add",DRIVERS=="ixgbe",RUN+="/lib/udev/ixgbevf-udevhelper"
+ENV{ID_BUS}=="pci",ACTION=="add",DRIVERS=="ixgbe",RUN+="/lib/udev/ixgbevf-udevhelper"
 SUBSYSTEM=="net",ACTION=="add",DRIVERS=="ixgbevf",PROGRAM=="/lib/udev/ixgbevf-udevhelper",RESULT=="?*",NAME="%c"
