@@ -111,9 +111,14 @@ case "$ACTION" in
 			if [ -n "$DEBUG" ]; then
 				splog "PFNAME=$PFNAME VFNAME=$VFNAME${VFVLAN:+ VFVLAN=$VFVLAN}"
 			fi
-			# set VLAN and MAC filtering for the VF
-			ip link set "$PFNAME" vf "$VFID" mac ${VFMAC}${VFVLAN:+ vlan $VFVLAN} &>/dev/null
-			splog "ip link set $PFNAME vf $VFID mac ${VFMAC}${VFVLAN:+ vlan $VFVLAN} (ret:$?)"
+			# set MAC filtering for the VF
+			ip link set "$PFNAME" vf "$VFID" mac ${VFMAC} &>/dev/null
+			splog "ip link set $PFNAME vf $VFID mac ${VFMAC} (ret:$?)"
+			if [ -n "$VFVLAN" ]; then
+				# set VLAN and MAC filtering for the VF
+				ip link set "$PFNAME" vf "$VFID" vlan $VFVLAN &>/dev/null
+				splog "ip link set $PFNAME vf $VFID vlan $VFVLAN (ret:$?)"
+			fi
 			# return the new VF interface name
 			echo "$VFNAME"
 		fi
