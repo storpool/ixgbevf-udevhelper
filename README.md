@@ -27,6 +27,19 @@ cp ixgbevf-udevhelper.conf /etc/
 udevadm control --reload-rules
 ```
 
+## Known issues
+
+```
+Aug 10 11:43:24 server kernel: ixgbe 0000:04:00.0 enp4s0f0: SR-IOV enabled with 1 VFs
+Aug 10 11:43:24 server kernel: ixgbe 0000:04:00.1 enp4s0f1: SR-IOV enabled with 1 VFs
+Aug 10 11:43:24 server kernel: ixgbe 0000:04:00.1: not enough MMIO resources for SR-IOV
+Aug 10 11:43:24 server kernel: ixgbe 0000:04:00.0: not enough MMIO resources for SR-IOV
+Aug 10 11:43:24 server kernel: ixgbe 0000:04:00.0: Failed to enable PCI sriov: -12
+Aug 10 11:43:24 server kernel: ixgbe 0000:04:00.1: Failed to enable PCI sriov: -12
+```
+
+A workaround is to add also `pci=realloc` at the kernel cmdline.
+
 ## Configuration
 
 ### /etc/ixgbevf-udevhelper.conf
