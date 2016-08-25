@@ -113,8 +113,14 @@ case "$ACTION" in
 				splog "Warning! VFVLAN=$VFVLAN for $VFNAME looks like not VLAN_ID! Skipped vlan setup."
 				VFVLAN=
 			fi
+			eval "VFMTU=\${${VFNAME}_MTU}"
+			# validate mtu
+			if [ -n "$VFMTU" ] && [ "${VFMTU//[[:digit:]]/}" != ""  ] ; then
+				splog "Warning! VFMTU=$VFMTU for $VFNAME looks like not MTU! Skipping mtu setup."
+				VFMTU=
+			fi
 			if [ -n "$DEBUG" ]; then
-				splog "PFNAME=$PFNAME VFNAME=$VFNAME${VFVLAN:+ VFVLAN=$VFVLAN}"
+				splog "PFNAME=$PFNAME VFNAME=$VFNAME${VFVLAN:+ VFVLAN=$VFVLAN}${VFMTU:+ VFMTU=$VFMTU}"
 			fi
 			# set MAC filtering for the VF
 			ip link set "$PFNAME" vf "$VFID" mac ${VFMAC} &>/dev/null
@@ -123,6 +129,11 @@ case "$ACTION" in
 				# set VLAN filtering for the VF
 				ip link set "$PFNAME" vf "$VFID" vlan $VFVLAN &>/dev/null
 				splog "ip link set $PFNAME vf $VFID vlan $VFVLAN (ret:$?)"
+			fi
+			if [ -n "$VFMTU" ]; then
+				# set MTU for the VF
+				ip link set dev "$INTERFACE" mtu $VFMTU &>/dev/null
+				splog "ip link set dev "$INTERFACE" mtu $VFMTU (ret:$?)"
 			fi
 			# return the new VF interface name
 			echo "$VFNAME"

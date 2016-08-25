@@ -59,16 +59,23 @@ Comma or space separated list corresponding to each PCI_SLOT from above
 PCI_NUMVFS_LIST="<number>[,...]"
 
 * VLAN_ID for VF interface
-Optional set VLAN id to VF interface
+Optional set VLAN id to the VF interface
 <EXPANDED_VFNAME_TEMPLATE>_VLAN=<VLAN_ID>
 
-For example to create two VF interfaces on eth2 and one VF interface on eth3 with corresponding PCI slot names 0000:04:00.0 and 0000:04:00.1 with VLANS 24 and 42 on eth2 and VLAN 1000 on eth3:
+* MTU for VF interface
+Optional set MTU to the VF interface
+<EXPANDED_VFNAME_TEMPLATE>_MTU=<MTU>
+
+For example to create two VF interfaces on eth2 and one VF interface on eth3 with corresponding PCI slot names 0000:04:00.0 and 0000:04:00.1 with VLANS 24 and 42 on eth2 and VLAN 1000 on eth3 and all with mtu 9000:
 ```bash
 PCI_SLOT_LIST="0000:04:00.0,0000:04:00.1"
 PCI_NUMVFS_LIST=2,1
 eth2_vf0_VLAN=24
 eth2_vf1_VLAN=42
 eth3_vf0_VLAN=1000
+eth2_vf0_MTU=9000
+eth2_vf1_MTU=9000
+eth3_vf0_MTU=9000
 ```
 
 There is DEBUG variable that if set to anything will trigger the udev helper script to log more info to syslog.
