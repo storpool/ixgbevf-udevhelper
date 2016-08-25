@@ -80,6 +80,7 @@ eth3_vf0_MTU=9000
 
 There is DEBUG variable that if set to anything will trigger the udev helper script to log more info to syslog.
 
+Some CentOS kernels has issue with setting the MTU on the VFs before parent interface is up with proper MTU. To solve this uncomment the following to set the parent interface before setting the MTU on the slaves `SET_PARENT_MTU=yes`
 
 ### /etc/network/interfaces
 * create configuration for the VF interface

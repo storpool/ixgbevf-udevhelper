@@ -132,8 +132,22 @@ case "$ACTION" in
 			fi
 			if [ -n "$VFMTU" ]; then
 				# set MTU for the VF
-				ip link set dev "$INTERFACE" mtu $VFMTU &>/dev/null
-				splog "ip link set dev "$INTERFACE" mtu $VFMTU (ret:$?)"
+				if [ "$SET_PARENT_MTU" = "yes" ]; then
+					set +e
+					ip link set dev "$PFNAME" mtu $VFMTU &>/dev/null
+					splog "ip link set dev $PFNAME mtu $VFMTU (ret:$?)"
+					ip link set dev "$PFNAME" up &>/dev/null
+					splog "ip link set dev $PFNAME up (ret:$?)"
+					ip link set "$INTERFACE" name "${VFNAME}" &>/dev/null
+					splog "ip link set $INTERFACE name $VFNAME (ret:$?)"
+					ip link set dev "$VFNAME" up &>/dev/null
+					splog "ip link set dev $VFNAME up (ret:$?)"
+					IFNAME="$VFNAME"
+				else
+					IFNAME="$INTERFACE"
+				fi
+				ip link set dev "$IFNAME" mtu $VFMTU &>/dev/null
+				splog "ip link set dev $IFNAME mtu $VFMTU (ret:$?)"
 			fi
 			# return the new VF interface name
 			echo "$VFNAME"
