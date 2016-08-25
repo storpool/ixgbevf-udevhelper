@@ -106,8 +106,8 @@ case "$ACTION" in
 				fi
 				exit
 			fi
-			eval "VFVLAN=\${${VFNAME}_VLAN}"
 			VFMAC="$(</sys/${DEVPATH}/address)"
+			eval "VFVLAN=\${${VFNAME}_VLAN}"
 			# validate vlan_id
 			if [ -n "$VFVLAN" ] && [ "${VFVLAN//[[:digit:]]/}" != ""  ] ; then
 				splog "Warning! VFVLAN=$VFVLAN for $VFNAME looks like not VLAN_ID! Skipped vlan setup."
@@ -120,7 +120,7 @@ case "$ACTION" in
 			ip link set "$PFNAME" vf "$VFID" mac ${VFMAC} &>/dev/null
 			splog "ip link set $PFNAME vf $VFID mac ${VFMAC} (ret:$?)"
 			if [ -n "$VFVLAN" ]; then
-				# set VLAN and MAC filtering for the VF
+				# set VLAN filtering for the VF
 				ip link set "$PFNAME" vf "$VFID" vlan $VFVLAN &>/dev/null
 				splog "ip link set $PFNAME vf $VFID vlan $VFVLAN (ret:$?)"
 			fi
