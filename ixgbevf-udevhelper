@@ -119,8 +119,13 @@ case "$ACTION" in
 				splog "Warning! VFMTU=$VFMTU for $VFNAME looks like not MTU! Skipping mtu setup."
 				VFMTU=
 			fi
+			eval "VFSPOOFCHK=\${${VFNAME}_SPOOFCHK}"
+			if [ -n "$VFSPOOFCHK" && "$VFSPOOFCHK" != 'on' && "$VFSPOOFCHK" != "off" ]; then
+				splog "Warning! VFSPOOFCHK=$VFSPOOFCHK for $VFNAME must be on or off. Skipping spoof check setup."
+				VFSPOOFCHK=
+			fi
 			if [ -n "$DEBUG" ]; then
-				splog "PFNAME=$PFNAME VFNAME=$VFNAME${VFVLAN:+ VFVLAN=$VFVLAN}${VFMTU:+ VFMTU=$VFMTU}"
+				splog "PFNAME=$PFNAME VFNAME=$VFNAME${VFVLAN:+ VFVLAN=$VFVLAN}${VFMTU:+ VFMTU=$VFMTU} VFSPOOFCHK=$VFSPOOFCHK"
 			fi
 			# set MAC filtering for the VF
 			ip link set "$PFNAME" vf "$VFID" mac ${VFMAC} &>/dev/null
@@ -129,6 +134,10 @@ case "$ACTION" in
 				# set VLAN filtering for the VF
 				ip link set "$PFNAME" vf "$VFID" vlan $VFVLAN &>/dev/null
 				splog "ip link set $PFNAME vf $VFID vlan $VFVLAN (ret:$?)"
+			fi
+			if [ -n "$VFSPOOFCHK" ]; then
+				ip link set dev "$PFNAME" vf "$VFID" spoofchk "$VFSPOOFCHK" &>/dev/null
+				splog "ip link set dev $PFNAME vf $VFID spoofchk $VFSPOOFCHK (ret:$?)" &>/dev/null
 			fi
 			if [ -n "$VFMTU" ]; then
 				# set MTU for the VF

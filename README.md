@@ -66,7 +66,12 @@ Optional set VLAN id to the VF interface
 Optional set MTU to the VF interface
 <EXPANDED_VFNAME_TEMPLATE>_MTU=<MTU>
 
-For example to create two VF interfaces on eth2 and one VF interface on eth3 with corresponding PCI slot names 0000:04:00.0 and 0000:04:00.1 with VLANS 24 and 42 on eth2 and VLAN 1000 on eth3 and all with mtu 9000:
+* disable spoofchk on the VF interface
+# Default is 'on', to turn off set:
+<EXPANDED_VFNAME_TEMPLATE>_SPOOFCHK='off'
+
+
+For example to create two VF interfaces on eth2 and one VF interface on eth3 with corresponding PCI slot names 0000:04:00.0 and 0000:04:00.1 with VLANS 24 and 42 on eth2 and VLAN 1000 on eth3 and all with mtu 9000 with spoof check disabled on second VF on eth2:
 ```bash
 PCI_SLOT_LIST="0000:04:00.0,0000:04:00.1"
 PCI_NUMVFS_LIST=2,1
@@ -76,6 +81,7 @@ eth3_vf0_VLAN=1000
 eth2_vf0_MTU=9000
 eth2_vf1_MTU=9000
 eth3_vf0_MTU=9000
+eth2_vf1_SPOOFCHK=off
 ```
 
 There is DEBUG variable that if set to anything will trigger the udev helper script to log more info to syslog.
