@@ -82,6 +82,30 @@ A workaround is to add also `pci=realloc` at the kernel cmdline.
   
     `<EXPANDED_VFNAME_TEMPLATE>_SPOOFCHK="off"`
 
+* Disable spoof check on the VF interface
+
+  Default is 'on', to turn off set:
+  
+    `<EXPANDED_VFNAME_TEMPLATE>_SPOOFCHK='off'`
+
+* Set MTU on the PF interface
+  
+  By default it is disabled. There are cases when it needs to be set like issues on CentOS/RHEL 7.2 driver
+  Default is to set it to the VF_MTU value if there is VF_MTU value set
+
+    `<PRIMARY_INTERFACE_NAME>_MTU=<number>`
+
+* Do not bring the primary interface up
+
+  By default the helper is bringing up the primary interface before altering the VFs
+  
+    `<PRIMARY_INTERFACE_NAME>_NO_UP=yes`
+
+* By default the helper will rename the VF interface according to the Template.
+
+  To leave the renaming of the VF interfaces to UDEV set the following variable:
+
+    `RENAME_VF_INTERFACE=no`
 
 For example to create two VF interfaces on eth2 and one VF interface on eth3 with corresponding PCI slot names 0000:04:00.0 and 0000:04:00.1 with VLANS 24 and 42 on eth2 and VLAN 1000 on eth3 and all with mtu 9000 with spoof check disabled on second VF on eth2:
 ```bash
