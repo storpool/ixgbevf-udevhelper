@@ -35,6 +35,9 @@ export PATH=/bin:/sbin:/usr/bin:/usr/sbin:$PATH
 
 NUMVFS_DELAY_WRITE="${NUMVFS_DELAY_WRITE:-1}"
 
+RENAME_VF_INTERFACE="yes"
+VF_UP_BEFORE_MTU="yes"
+
 function splog()
 {
 	logger -t "[$SEQNUM] ${0##*/}" "[$INTERFACE] $*"
@@ -86,7 +89,7 @@ case "$ACTION" in
 				if [ "${PCI_ARRAY[i]}" != "$PCI_SLOT_NAME" ]; then
 					continue
 				fi
-				if [ -n "$NUMVFS" ] && [ "${NUMVFS//[[:digit:]]/}" = ""  ] ; then
+				if [ "${NUMVFS//[[:digit:]]/}" = ""  ] ; then
 					splog "enabling $NUMVFS VF on PCI slot $PCI_SLOT_NAME ${NUMVFS_DELAY_WRITE:+delay $NUMVFS_DELAY_WRITE}"
 					if [ -n "$NUMVFS_DELAY_WRITE" ]; then
 						sleep "$NUMVFS_DELAY_WRITE"
@@ -102,59 +105,88 @@ case "$ACTION" in
 			createVFNAME
 			if [ "$VFNAME" = "$INTERFACE" ]; then
 				if [ -n "$DEBUG" ]; then
-					splog "Skipping VF interface..."
+					splog "Skipping VF interface name same as PARENT ${VFNAME}. Skipping..."
 				fi
 				exit
 			fi
 			VFMAC="$(</sys/${DEVPATH}/address)"
 			eval "VFVLAN=\${${VFNAME}_VLAN}"
-			# validate vlan_id
-			if [ -n "$VFVLAN" ] && [ "${VFVLAN//[[:digit:]]/}" != ""  ] ; then
-				splog "Warning! VFVLAN=$VFVLAN for $VFNAME looks like not VLAN_ID! Skipped vlan setup."
+			if [ "${VFVLAN//[[:digit:]]/}" != ""  ] ; then
+				splog "Warning! ${VFNAME}_VLAN=$VFVLAN looks like not VLAN_ID! Skipped vlan setup."
 				VFVLAN=
 			fi
+			eval "PFMTU=\${${PFNAME}_MTU}"
+			if [ "${PFMTU//[[:digit:]]/}" != ""  ] ; then
+				splog "Warning! ${PFNAME}_MTU=$PFMTU looks like not MTU! Skipping mtu setup."
+				PFMTU=
+			fi
 			eval "VFMTU=\${${VFNAME}_MTU}"
-			# validate mtu
-			if [ -n "$VFMTU" ] && [ "${VFMTU//[[:digit:]]/}" != ""  ] ; then
-				splog "Warning! VFMTU=$VFMTU for $VFNAME looks like not MTU! Skipping mtu setup."
+			if [ "${VFMTU//[[:digit:]]/}" != ""  ] ; then
+				splog "Warning! ${VFNAME}_MTU=$VFMTU looks like not MTU! Skipping mtu setup."
 				VFMTU=
+			else
+				PFMTU="${$PFMTU:-$VFMTU}"
 			fi
 			eval "VFSPOOFCHK=\${${VFNAME}_SPOOFCHK}"
-			if [ -n "$VFSPOOFCHK" && "$VFSPOOFCHK" != 'on' && "$VFSPOOFCHK" != "off" ]; then
-				splog "Warning! VFSPOOFCHK=$VFSPOOFCHK for $VFNAME must be on or off. Skipping spoof check setup."
+			if [ -n "$VFSPOOFCHK" ] && [ "$VFSPOOFCHK" != 'on' ] && [ "$VFSPOOFCHK" != "off" ]; then
+				splog "Warning! ${VFNAME}_SPOOFCHK=$VFSPOOFCHK must be 'on' or 'off'. Skipping spoof check setup."
 				VFSPOOFCHK=
 			fi
+
 			if [ -n "$DEBUG" ]; then
-				splog "PFNAME=$PFNAME VFNAME=$VFNAME${VFVLAN:+ VFVLAN=$VFVLAN}${VFMTU:+ VFMTU=$VFMTU} VFSPOOFCHK=$VFSPOOFCHK"
+				splog "PFNAME=$PFNAME VFNAME=$VFNAME${VFVLAN:+ VFVLAN=$VFVLAN}${PFMTU:+ PFMTU=$PFMTU}${VFMTU:+ VFMTU=$VFMTU}${VFSPOOFCHK:+ VFSPOOFCHK=$VFSPOOFCHK}"
 			fi
+
+			OLDMTU=`ip link show $PFNAME | head -n 1 | awk '{print $5}'`
+			# change PF MTU if differ
+			if [ -n "$PFMTU" ] && [ "$PFMTU" != "$OLDMTU" ]; then
+				ip link set dev "$PFNAME" mtu $PFMTU &>/dev/null
+				splog "ip link set dev $PFNAME mtu $PFMTU (ret:$?) #OLDMTU:$OLDMTU"
+			fi
+
+			eval "PF_NO_UP=\${${PFNAME}_NO_UP}"
+			# bring PF interface up by default
+			if [ "$PF_NO_UP" != "yes"] || [ "$PF_NO_UP" != "1"]; then
+				OLDSTATE=`ip link show "$PFNAME" up | wc -l`
+				if [ $OLDSTATE -eq 0 ]; then
+					ip link set dev "$PFNAME" up &>/dev/null
+					splog "ip link set dev $PFNAME up (ret:$?)"
+				elif [ -n "$DEBUG" ]; then
+					splog "the interface is already up"
+				fi
+			fi
+
 			# set MAC filtering for the VF
 			ip link set "$PFNAME" vf "$VFID" mac ${VFMAC} &>/dev/null
 			splog "ip link set $PFNAME vf $VFID mac ${VFMAC} (ret:$?)"
+
 			if [ -n "$VFVLAN" ]; then
 				# set VLAN filtering for the VF
 				ip link set "$PFNAME" vf "$VFID" vlan $VFVLAN &>/dev/null
 				splog "ip link set $PFNAME vf $VFID vlan $VFVLAN (ret:$?)"
 			fi
+
 			if [ -n "$VFSPOOFCHK" ]; then
+				# set VF spoof check
 				ip link set dev "$PFNAME" vf "$VFID" spoofchk "$VFSPOOFCHK" &>/dev/null
 				splog "ip link set dev $PFNAME vf $VFID spoofchk $VFSPOOFCHK (ret:$?)" &>/dev/null
 			fi
+
+			if [ "$RENAME_VF_INTERFACE" = "yes" ]; then
+				ip link set "$INTERFACE" name "${VFNAME}" &>/dev/null
+				splog "ip link set $INTERFACE name $VFNAME (ret:$?)"
+				IFNAME="$VFNAME"
+			else
+				IFNAME="$INTERFACE"
+			fi
+
 			if [ -n "$VFMTU" ]; then
-				# set MTU for the VF
-				if [ "$SET_PARENT_MTU" = "yes" ]; then
-					set +e
-					ip link set dev "$PFNAME" mtu $VFMTU &>/dev/null
-					splog "ip link set dev $PFNAME mtu $VFMTU (ret:$?)"
-					ip link set dev "$PFNAME" up &>/dev/null
-					splog "ip link set dev $PFNAME up (ret:$?)"
-					ip link set "$INTERFACE" name "${VFNAME}" &>/dev/null
-					splog "ip link set $INTERFACE name $VFNAME (ret:$?)"
-					ip link set dev "$VFNAME" up &>/dev/null
-					splog "ip link set dev $VFNAME up (ret:$?)"
-					IFNAME="$VFNAME"
-				else
-					IFNAME="$INTERFACE"
+				# first bring the VF interface up
+				if [ "$VF_UP_BEFORE_MTU" = "yes" ] || [ "$VF_UP_BEFORE_MTU" = "1" ]; then
+					ip link set dev "$IFNAME" up &>/dev/null
+					splog "ip link set dev $IFNAME up (ret:$?)"
 				fi
+				# set MTU for the VF
 				ip link set dev "$IFNAME" mtu $VFMTU &>/dev/null
 				splog "ip link set dev $IFNAME mtu $VFMTU (ret:$?)"
 			fi
