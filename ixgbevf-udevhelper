@@ -125,7 +125,7 @@ case "$ACTION" in
 				splog "Warning! ${VFNAME}_MTU=$VFMTU looks like not MTU! Skipping mtu setup."
 				VFMTU=
 			else
-				PFMTU="${$PFMTU:-$VFMTU}"
+				PFMTU="${PFMTU:-$VFMTU}"
 			fi
 			eval "VFSPOOFCHK=\${${VFNAME}_SPOOFCHK}"
 			if [ -n "$VFSPOOFCHK" ] && [ "$VFSPOOFCHK" != 'on' ] && [ "$VFSPOOFCHK" != "off" ]; then
