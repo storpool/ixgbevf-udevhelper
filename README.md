@@ -66,9 +66,9 @@ Optional set VLAN id to the VF interface
 Optional set MTU to the VF interface
 <EXPANDED_VFNAME_TEMPLATE>_MTU=<MTU>
 
-* disable spoofchk on the VF interface
-# Default is 'on', to turn off set:
-<EXPANDED_VFNAME_TEMPLATE>_SPOOFCHK='off'
+* Disable spoofchk on the VF interface
+Default is 'on', to turn off set:
+<EXPANDED_VFNAME_TEMPLATE>_SPOOFCHK="off"
 
 
 For example to create two VF interfaces on eth2 and one VF interface on eth3 with corresponding PCI slot names 0000:04:00.0 and 0000:04:00.1 with VLANS 24 and 42 on eth2 and VLAN 1000 on eth3 and all with mtu 9000 with spoof check disabled on second VF on eth2:
