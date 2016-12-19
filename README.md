@@ -49,30 +49,37 @@ A workaround is to add also `pci=realloc` at the kernel cmdline.
 
     `_PFNAME_` - name of the phys interface
     `_VFID_` - VF id number, starting from 0
+    
   Default: `VFNAME_TEMPLATE="_PFNAME__vf_VFID_"`
 
 * List of PCI slots on which to enable VF
 
   Comma or space separated list of PCI_SLOT_NAMES:
+  
     `PCI_SLOT_LIST="<PCI_SLOT_NAME>[,...]"`
 
 * Number of VF interfaces to bring up.
 
   Comma or space separated list corresponding to each PCI_SLOT from above
+  
     `PCI_NUMVFS_LIST="<number>[,...]"`
 
 * VLAN\_ID for VF interface
   
   Optional set VLAN id to the VF interface
+  
     `<EXPANDED_VFNAME_TEMPLATE>_VLAN=<VLAN_ID>`
 
 * MTU for VF interface
+
   Optional set MTU to the VF interface
+  
     `<EXPANDED_VFNAME_TEMPLATE>_MTU=<MTU>`
 
 * Disable spoofchk on the VF interface
 
   Default is 'on', to turn off
+  
     `<EXPANDED_VFNAME_TEMPLATE>_SPOOFCHK="off"`
 
 
