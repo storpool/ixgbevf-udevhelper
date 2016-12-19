@@ -45,30 +45,35 @@ A workaround is to add also `pci=realloc` at the kernel cmdline.
 ### /etc/ixgbevf-udevhelper.conf
 
 * Template used for naming VF interfaces
-Expandable variables:
-  _PFNAME_ - name of the phys interface
-  _VFID_ - VF id number, starting from 0
-Default: VFNAME_TEMPLATE="_PFNAME__vf_VFID_"
+  Expandable variables:
+
+    `_PFNAME_` - name of the phys interface
+    `_VFID_` - VF id number, starting from 0
+  Default: `VFNAME_TEMPLATE="_PFNAME__vf_VFID_"`
 
 * List of PCI slots on which to enable VF
-Comma or space separated list of PCI_SLOT_NAMES
-PCI_SLOT_LIST="<PCI_SLOT_NAME>[,...]"
+
+  Comma or space separated list of PCI_SLOT_NAMES:
+    `PCI_SLOT_LIST="<PCI_SLOT_NAME>[,...]"`
 
 * Number of VF interfaces to bring up.
-Comma or space separated list corresponding to each PCI_SLOT from above
-PCI_NUMVFS_LIST="<number>[,...]"
 
-* VLAN_ID for VF interface
-Optional set VLAN id to the VF interface
-<EXPANDED_VFNAME_TEMPLATE>_VLAN=<VLAN_ID>
+  Comma or space separated list corresponding to each PCI_SLOT from above
+    `PCI_NUMVFS_LIST="<number>[,...]"`
+
+* VLAN\_ID for VF interface
+  
+  Optional set VLAN id to the VF interface
+    `<EXPANDED_VFNAME_TEMPLATE>_VLAN=<VLAN_ID>`
 
 * MTU for VF interface
-Optional set MTU to the VF interface
-<EXPANDED_VFNAME_TEMPLATE>_MTU=<MTU>
+  Optional set MTU to the VF interface
+    `<EXPANDED_VFNAME_TEMPLATE>_MTU=<MTU>`
 
 * Disable spoofchk on the VF interface
-Default is 'on', to turn off set:
-<EXPANDED_VFNAME_TEMPLATE>_SPOOFCHK="off"
+
+  Default is 'on', to turn off
+    `<EXPANDED_VFNAME_TEMPLATE>_SPOOFCHK="off"`
 
 
 For example to create two VF interfaces on eth2 and one VF interface on eth3 with corresponding PCI slot names 0000:04:00.0 and 0000:04:00.1 with VLANS 24 and 42 on eth2 and VLAN 1000 on eth3 and all with mtu 9000 with spoof check disabled on second VF on eth2:
