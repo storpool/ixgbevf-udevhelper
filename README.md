@@ -1,8 +1,10 @@
-# ixgbe virtual function udev helper
+# ixgbe and i40e virtual function udev helper
 
 ## Description
 
 Set of udev rules and script to help bringing up Virtual Function(VF) interfaces on Intel NICs handled by ixgbe(ixgbevf) Linux kernel module
+
+The newer NICs like X710 are using i40e kernel module which is handled too
 
 ## Author
 
@@ -95,6 +97,10 @@ A workaround is to add also `pci=realloc` at the kernel cmdline.
 
     `<PRIMARY_INTERFACE_NAME>_MTU=<number>`
 
+* When changing VF MTU bring the interface up first
+The VF interface will be bring up before setting it's MTU. To disable this behavior set
+VF_UP_BEFORE_MTU='no'
+
 * Do not bring the primary interface up
 
   By default the helper is bringing up the primary interface before altering the VFs
@@ -106,6 +112,10 @@ A workaround is to add also `pci=realloc` at the kernel cmdline.
   To leave the renaming of the VF interfaces to UDEV set the following variable:
 
     `RENAME_VF_INTERFACE=no`
+
+* wait for VF information is sysfs to be populated
+On a slow/busy system the value could be increased
+NUMVFS_WAIT=30
 
 For example to create two VF interfaces on eth2 and one VF interface on eth3 with corresponding PCI slot names 0000:04:00.0 and 0000:04:00.1 with VLANS 24 and 42 on eth2 and VLAN 1000 on eth3 and all with mtu 9000 with spoof check disabled on second VF on eth2:
 ```bash
@@ -122,12 +132,10 @@ eth2_vf1_SPOOFCHK=off
 
 There is DEBUG variable that if set to anything will trigger the udev helper script to log more info to syslog.
 
-Some CentOS kernels has issue with setting the MTU on the VFs before parent interface is up with proper MTU. To solve this uncomment the following to set the parent interface before setting the MTU on the slaves `SET_PARENT_MTU=yes`
-
 ### /etc/network/interfaces
 * create configuration for the VF interface
 
 Please note that the VF interfaces are manageable after the physical interface is up.
 
 ---
-Copyright (c) 2015-2016 StorPool Storage AD
+Copyright (c) 2015-2017 StorPool Storage AD

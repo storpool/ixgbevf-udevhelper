@@ -1,7 +1,7 @@
 #!/bin/bash
 # The MIT License (MIT)
 #
-# Copyright (c) 2015-2016 StorPool Storage AD
+# Copyright (c) 2015-2017 StorPool Storage AD
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,7 @@ set -e
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin:$PATH
 
 NUMVFS_DELAY_WRITE="${NUMVFS_DELAY_WRITE:-1}"
+NUMVFS_WAIT="${NUMVFS_WAIT:-30}"
 
 RENAME_VF_INTERFACE="yes"
 VF_UP_BEFORE_MTU="yes"
@@ -74,7 +75,7 @@ fi
 
 case "$ACTION" in
 	add)
-		if [ "$DRIVER" = "ixgbe" ]; then
+		if [ "$DRIVER" = "ixgbe" ] || [ "$DRIVER" = "i40e" ]; then
 			PCI_ARRAY=(${PCI_SLOT_LIST//,/ })
 			PCI_NUMVFS=(${PCI_NUMVFS_LIST//,/ })
 			if [ "$PCI_SLOT_NAME" = "" ]; then
@@ -82,24 +83,34 @@ case "$ACTION" in
 				PCI_SLOT_NAME=${PCI_SLOT_NAME##*/}
 			fi
 			for i in ${!PCI_ARRAY[@]}; do
-				NUMVFS="${PCI_NUMVFS[i]}"
+				NUMVFS="${PCI_NUMVFS[i]:-0}"
 				if [ -n "$DEBUG" ]; then
 					splog "$i $PCI_SLOT_NAME PCI_SLOT ${PCI_ARRAY[i]} NUMVFS $NUMVFS"
 				fi
 				if [ "${PCI_ARRAY[i]}" != "$PCI_SLOT_NAME" ]; then
 					continue
 				fi
-				if [ "${NUMVFS//[[:digit:]]/}" = ""  ] ; then
-					splog "enabling $NUMVFS VF on PCI slot $PCI_SLOT_NAME ${NUMVFS_DELAY_WRITE:+delay $NUMVFS_DELAY_WRITE}"
-					if [ -n "$NUMVFS_DELAY_WRITE" ]; then
-						sleep "$NUMVFS_DELAY_WRITE"
+				if [ "${NUMVFS//[[:digit:]]/}" = ""  ] && [ $NUMVFS -gt 0 ] ; then
+					retry="${NUMVFS_WAIT:-10}"
+					while [ $retry -gt 0 ]; do
+						if [ -f "/sys/module/${DRIVER}/drivers/pci:${DRIVER}/$PCI_SLOT_NAME/sriov_numvfs" ]; then
+							splog "enabling $NUMVFS VF on PCI slot $PCI_SLOT_NAME ${NUMVFS_DELAY_WRITE:+delay $NUMVFS_DELAY_WRITE} ($((NUMVFS_WAIT-$retry)))"
+							echo "$NUMVFS" >"/sys/module/${DRIVER}/drivers/pci:${DRIVER}/$PCI_SLOT_NAME/sriov_numvfs"
+							break
+#						else
+#							splog "[try:$retry] /sys/module/${DRIVER}/drivers/pci:${DRIVER}/$PCI_SLOT_NAME/sriov_numvfs not found"
+						fi
+						retry=$((retry-1))
+						sleep 0.1
+					done
+					if [ -n "$DEBUG" ]; then
+						splog "/sys/module/${DRIVER}/drivers/pci:${DRIVER}/$PCI_SLOT_NAME/sriov_numvfs: $(</sys/module/${DRIVER}/drivers/pci:${DRIVER}/$PCI_SLOT_NAME/sriov_numvfs)"
 					fi
-					echo "$NUMVFS" >"/sys/module/ixgbe/drivers/pci:ixgbe/$PCI_SLOT_NAME/sriov_numvfs"
 				else
-					splog "no PCI_NUMVFS set for $PCI_SLOT_NAME"
+					splog "no PCI_NUMVFS set for $PCI_SLOT_NAME or zero"
 				fi
 			done
-		elif [ "$DRIVER" = "ixgbevf" ]; then
+		elif [ "$DRIVER" = "ixgbevf" ] || [ "$DRIVER" = "i40evf" ]; then
 			PFNAME="$(ls /sys/${DEVPATH}/../../physfn/net)"
 			VFID=`getVirtfnId $DEVPATH`
 			createVFNAME
