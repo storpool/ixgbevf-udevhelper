@@ -114,8 +114,10 @@ VF_UP_BEFORE_MTU='no'
     `RENAME_VF_INTERFACE=no`
 
 * wait for VF information is sysfs to be populated
-On a slow/busy system the value could be increased
-NUMVFS_WAIT=30
+
+  On a slow/busy system the value could be increased
+
+    `NUMVFS_WAIT=30`
 
 For example to create two VF interfaces on eth2 and one VF interface on eth3 with corresponding PCI slot names 0000:04:00.0 and 0000:04:00.1 with VLANS 24 and 42 on eth2 and VLAN 1000 on eth3 and all with mtu 9000 with spoof check disabled on second VF on eth2:
 ```bash
