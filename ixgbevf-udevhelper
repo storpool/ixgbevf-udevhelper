@@ -95,15 +95,15 @@ case "$ACTION" in
 				PCI_SLOT_NAME=${DEVPATH%/net*}
 				PCI_SLOT_NAME=${PCI_SLOT_NAME##*/}
 			fi
-			for i in ${!PCI_ARRAY[@]}; do
-				NUMVFS="${PCI_NUMVFS[i]:-0}"
+			for idx in ${!PCI_ARRAY[@]}; do
+				NUMVFS="${PCI_NUMVFS[idx]:-0}"
 				if [ -n "$DEBUG" ]; then
-					splog "$i $PCI_SLOT_NAME PCI_SLOT ${PCI_ARRAY[i]} NUMVFS $NUMVFS"
+					splog "$idx $PCI_SLOT_NAME PCI_SLOT ${PCI_ARRAY[i]} NUMVFS $NUMVFS"
 				fi
-				if [ "${PCI_ARRAY[i]}" != "$PCI_SLOT_NAME" ]; then
+				if [ "${PCI_ARRAY[idx]}" != "$PCI_SLOT_NAME" ]; then
 					continue
 				fi
-				if [ "${NUMVFS//[[:digit:]]/}" = ""  ] && [ $NUMVFS -gt 0 ] ; then
+				if [ -n "$NUMVFS" ] && [ "${NUMVFS//[[:digit:]]/}" = ""  ] && [ $NUMVFS -gt 0 ] ; then
 					retry="${NUMVFS_WAIT:-10}"
 					while [ $retry -gt 0 ]; do
 						if [ -f "/sys/module/${DRIVER}/drivers/pci:${DRIVER}/$PCI_SLOT_NAME/sriov_numvfs" ]; then
@@ -119,11 +119,28 @@ case "$ACTION" in
 					if [ -n "$DEBUG" ]; then
 						splog "/sys/module/${DRIVER}/drivers/pci:${DRIVER}/$PCI_SLOT_NAME/sriov_numvfs: $(</sys/module/${DRIVER}/drivers/pci:${DRIVER}/$PCI_SLOT_NAME/sriov_numvfs)"
 					fi
+
+					VFID=0
+					PFNAME="${DEVPATH##*/}"
+					eval "_TMP=\${PCI${idx}_VF_SPOOFCHK_LIST}"
+					_TMP=(${_TMP//,/ })
+					while [ $VFID -lt $NUMVFS ]; do
+						pci_vf_SPOOFCHK="${_TMP[VFID]}"
+						splog "PFNAME:$PFNAME VFID:$VFID pci_vf_SPOOFCHK=$pci_vf_SPOOFCHK"
+						if [ "$pci_vf_SPOOFCHK" != 'on' ] && [ "$pci_vf_SPOOFCHK" != "off" ]; then
+							splog "Warning! $PCI_SLOT_NAME VF=$VFID SPOOFCHK='$pci_vf_SPOOFCHK' must be 'on' or 'off'. Skipping spoof check setup."
+						else
+							# set VF spoof check
+							ip link set dev "$PFNAME" vf "$VFID" spoofchk "$pci_vf_SPOOFCHK" &>/dev/null
+							splog "ip link set dev $PFNAME vf $VFID spoofchk $pci_vf_SPOOFCHK (ret:$?)" &>/dev/null
+						fi
+						((VFID=VFID+1))
+					done
 				else
 					if [ -n "$NUMVFS" ]; then
-						splog "Skipped $PCI_SLOT_NAME because NUMVFS='$NUMVFS'"
+						splog "Skipped $PCI_SLOT_NAME because NUMVFS not number ($NUMVFS)"
 					else
-						splog "No PCI_NUMVFS set for $PCI_SLOT_NAME (id:$i)"
+						splog "No PCI_NUMVFS set for $PCI_SLOT_NAME (idx:$idx)"
 					fi
 				fi
 			done
@@ -144,9 +161,6 @@ case "$ACTION" in
 					eval "_TMP=\${PCI${idx}_VF_MTU_LIST}"
 					_TMP=(${_TMP//,/ })
 					pci_vf_MTU="${_TMP[VFID]}"
-					eval "_TMP=\${PCI${idx}_VF_SPOOFCHK_LIST}"
-					_TMP=(${_TMP//,/ })
-					pci_vf_SPOOFCHK="${_TMP[VFID]}"
 					eval "_TMP=\${PCI${idx}_VF_TEMPLATE_LIST}"
 					_TMP=(${_TMP//,/ })
 					pci_vf_TEMPLATE="${_TMP[VFID]}"
@@ -156,7 +170,6 @@ case "$ACTION" in
 				else
 					pci_vf_VLAN=
 					pci_vf_MTU=
-					pci_vf_SPOOFCHK=
 					pci_vf_TEMPLATE=
 					pci_MTU=
 					pci_NO_UP=
@@ -177,15 +190,11 @@ case "$ACTION" in
 			else
 				pci_MTU="${pci_MTU:-$pci_vf_MTU}"
 			fi
-			if [ "$pci_vf_SPOOFCHK" != 'on' ] && [ "$pci_vf_SPOOFCHK" != "off" ]; then
-				splog "Warning! $PCI_NAME VF=$VFID SPOOFCHK=$pci_vf_SPOOFCHK must be 'on' or 'off'. Skipping spoof check setup."
-				pci_vf_SPOOFCHK=
-			fi
 
 			createVFNAME
 
 			if [ -n "$DEBUG" ]; then
-				splog "PFPCI=$PCI_NAME PFNAME=$PFNAME VFNAME=$VFNAME${pci_vf_VLAN:+ VFVLAN=$pci_vf_VLAN}${pci_MTU:+ PFMTU=$pci_MTU}${pci_vf_MTU:+ VFMTU=$pci_vf_MTU}${pci_vf_SPOOFCHK:+ VFSPOOFCHK=$pci_vf_SPOOFCHK}${pci_NO_UP:+ PCI_NO_UP=$pci_NO_UP}${pci_vf_TEMPLATE:+ VFTEMPLATE=$pci_vf_TEMPLATE}"
+				splog "PFPCI=$PCI_NAME PFNAME=$PFNAME VFNAME=$VFNAME${pci_vf_VLAN:+ VFVLAN=$pci_vf_VLAN}${pci_MTU:+ PFMTU=$pci_MTU}${pci_vf_MTU:+ VFMTU=$pci_vf_MTU}${pci_NO_UP:+ PCI_NO_UP=$pci_NO_UP}${pci_vf_TEMPLATE:+ VFTEMPLATE=$pci_vf_TEMPLATE}"
 			fi
 
 			OLDMTU=`ip link show $PFNAME | head -n 1 | awk '{print $5}'`
@@ -214,12 +223,6 @@ case "$ACTION" in
 				# set VLAN filtering for the VF
 				ip link set "$PFNAME" vf "$VFID" vlan "$pci_vf_VLAN" &>/dev/null
 				splog "ip link set $PFNAME vf $VFID vlan $pci_vf_VLAN (ret:$?)"
-			fi
-
-			if [ -n "$pci_vf_SPOOFCHK" ]; then
-				# set VF spoof check
-				ip link set dev "$PFNAME" vf "$VFID" spoofchk "$pci_vf_SPOOFCHK" &>/dev/null
-				splog "ip link set dev $PFNAME vf $VFID spoofchk $pci_vf_SPOOFCHK (ret:$?)" &>/dev/null
 			fi
 
 			if [ "$RENAME_VF_INTERFACE" = "yes" ]; then
