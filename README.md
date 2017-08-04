@@ -12,20 +12,14 @@ The newer NICs like X710 are using i40e kernel module which is handled too
 
 ## Installation
 
-* Copy the udev rules file to /etc/udev/rules.d/:
 ```bash
+# Copy the udev rules file to /etc/udev/rules.d/:
 cp 99-ixgbevf-udevhelper.rules /etc/udev/rules.d/
-```
-* Copy the udev helper script to /lib/udev/:
-```bash
+# Copy the udev helper script to /lib/udev/:
 cp ixgbevf-udevhelper /lib/udev/
-```
-* Copy the config file to /etc/
-```bash
+# Copy the config file to /etc/
 cp ixgbevf-udevhelper.conf /etc/
-```
-* Reload udev rules
-```bash
+# Reload udev rules
 udevadm control --reload-rules
 ```
 
@@ -40,7 +34,15 @@ Aug 10 11:43:24 server kernel: ixgbe 0000:04:00.0: Failed to enable PCI sriov: -
 Aug 10 11:43:24 server kernel: ixgbe 0000:04:00.1: Failed to enable PCI sriov: -12
 ```
 
-A workaround is to add also `pci=realloc` at the kernel cmdline.
+A workaround is to add `pci=realloc` at the kernel cmdline.
+
+```
+Aug 10 12:21:24 server kernel: ixgbe 0000:02:00.0 enp2s0f0: SR-IOV enabled with 1 VFs
+Aug 10 12:21:24 server kernel: ixgbe 0000:02:00.0: can't enable 1 VFs (bus 03 out of range of [bus 02])
+Aug 10 12:21:24 server kernel: ixgbe 0000:02:00.0: Failed to enable PCI sriov: -12
+```
+
+A workaround is to add `pci=assign-busses` at the kernel cmdline.
 
 ## Configuration
 
