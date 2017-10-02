@@ -38,6 +38,7 @@ NUMVFS_WAIT="${NUMVFS_WAIT:-30}"
 
 RENAME_VF_INTERFACE="yes"
 VF_UP_BEFORE_MTU="yes"
+HARDWARE_FILTERING="yes"
 
 function splog()
 {
@@ -97,6 +98,7 @@ case "$ACTION" in
 			fi
 			for idx in ${!PCI_ARRAY[@]}; do
 				NUMVFS="${PCI_NUMVFS[idx]:-0}"
+				PFNAME="${DEVPATH##*/}"
 				if [ -n "$DEBUG" ]; then
 					splog "$idx $PCI_SLOT_NAME PCI_SLOT ${PCI_ARRAY[i]} NUMVFS $NUMVFS"
 				fi
@@ -119,9 +121,7 @@ case "$ACTION" in
 					if [ -n "$DEBUG" ]; then
 						splog "/sys/module/${DRIVER}/drivers/pci:${DRIVER}/$PCI_SLOT_NAME/sriov_numvfs: $(</sys/module/${DRIVER}/drivers/pci:${DRIVER}/$PCI_SLOT_NAME/sriov_numvfs)"
 					fi
-
 					VFID=0
-					PFNAME="${DEVPATH##*/}"
 					eval "_TMP=\${PCI${idx}_VF_SPOOFCHK_LIST}"
 					_TMP=(${_TMP//,/ })
 					while [ $VFID -lt $NUMVFS ]; do
@@ -142,6 +142,10 @@ case "$ACTION" in
 					else
 						splog "No PCI_NUMVFS set for $PCI_SLOT_NAME (idx:$idx)"
 					fi
+				fi
+				if [ "$HARDWARE_FILTERING" = "yes" ] && ethtool --version &>/dev/null; then
+					ethtool -K "$PFNAME" ntuple on
+					splog "ethtool -K $PFNAME ntuple on (ret:$?)" &>/dev/null
 				fi
 			done
 		elif [ "$DRIVER" = "ixgbevf" ] || [ "$DRIVER" = "i40evf" ]; then

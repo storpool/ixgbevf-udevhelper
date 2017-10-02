@@ -23,6 +23,8 @@ cp ixgbevf-udevhelper.conf /etc/
 udevadm control --reload-rules
 ```
 
+:exclamation: **_ethtool_ must be installed using the distribution's package manager.** Used to enable NIC hardware filtering.
+
 ## Known issues
 
 ```
@@ -144,6 +146,13 @@ PCI1_VF_MTU_LIST="9000"
 PCI0_VF_SPOOFCHK_LIST="on,off"
 PCI1_VF_SPOOFCHK_LIST="on"
 ```
+
+* hardware filtration in the NIC
+  
+  By default the helper tool enable the hardware filtering in the NIC.
+  To disable set the following:
+  
+    `HARDWARE_FILTERING=no`
 
 There is DEBUG variable that if set to anything will trigger the udev helper script to log more info to syslog.
 
