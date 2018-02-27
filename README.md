@@ -162,4 +162,4 @@ There is DEBUG variable that if set to anything will trigger the udev helper scr
 Please note that the VF interfaces are manageable after the physical interface is up.
 
 ---
-Copyright (c) 2015-2017 StorPool Storage AD
+Copyright (c) 2015-2018 StorPool Storage AD
