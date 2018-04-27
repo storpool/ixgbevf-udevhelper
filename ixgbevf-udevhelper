@@ -112,8 +112,9 @@ case "$ACTION" in
 							splog "enabling $NUMVFS VF on PCI slot $PCI_SLOT_NAME {$((NUMVFS_WAIT-$retry))}"
 							echo "$NUMVFS" >"/sys/module/${DRIVER}/drivers/pci:${DRIVER}/$PCI_SLOT_NAME/sriov_numvfs"
 							break
-#						else
-#							splog "[try:$retry] /sys/module/${DRIVER}/drivers/pci:${DRIVER}/$PCI_SLOT_NAME/sriov_numvfs not found"
+						elif [ -n "$DEBUG" ]; then
+								splog "[try:$retry] /sys/module/${DRIVER}/drivers/pci:${DRIVER}/$PCI_SLOT_NAME/sriov_numvfs not found"
+							fi
 						fi
 						retry=$((retry-1))
 						sleep 0.1
