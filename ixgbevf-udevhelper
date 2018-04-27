@@ -113,8 +113,7 @@ case "$ACTION" in
 							echo "$NUMVFS" >"/sys/module/${DRIVER}/drivers/pci:${DRIVER}/$PCI_SLOT_NAME/sriov_numvfs"
 							break
 						elif [ -n "$DEBUG" ]; then
-								splog "[try:$retry] /sys/module/${DRIVER}/drivers/pci:${DRIVER}/$PCI_SLOT_NAME/sriov_numvfs not found"
-							fi
+							splog "[try:$retry] /sys/module/${DRIVER}/drivers/pci:${DRIVER}/$PCI_SLOT_NAME/sriov_numvfs not found"
 						fi
 						retry=$((retry-1))
 						sleep 0.1
