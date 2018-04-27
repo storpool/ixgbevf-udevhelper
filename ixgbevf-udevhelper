@@ -100,7 +100,7 @@ case "$ACTION" in
 				NUMVFS="${PCI_NUMVFS[idx]:-0}"
 				PFNAME="${DEVPATH##*/}"
 				if [ -n "$DEBUG" ]; then
-					splog "$idx $PCI_SLOT_NAME PCI_SLOT ${PCI_ARRAY[i]} NUMVFS $NUMVFS"
+					splog "$idx $PCI_SLOT_NAME PCI_SLOT ${PCI_ARRAY[idx]} NUMVFS $NUMVFS"
 				fi
 				if [ "${PCI_ARRAY[idx]}" != "$PCI_SLOT_NAME" ]; then
 					continue
