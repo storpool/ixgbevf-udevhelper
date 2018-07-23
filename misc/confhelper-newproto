@@ -49,4 +49,5 @@ echo ""PCI_NUMVFS_LIST=\"$PCI_NUMVFS_LIST\"
 
 for ((i=0;i<$n;i++));do
     echo PCI${i}_VF_SPOOFCHK_LIST=\"off,off,off,off,off,off,off,off\"
+    echo PCI${i}_VF_TRUST_LIST=\"on,on,on,on,on,on,on,on\"
 done
