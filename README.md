@@ -95,6 +95,15 @@ A workaround is to add `pci=assign-busses` at the kernel cmdline.
 
   Default is 'on'
 
+* Set VF trust for VF interface (to enable Multicast promiscuous mode)
+  
+  Must match the number of VFs enabled for the given PCI interface.
+  
+  The interface naming convention format:
+    `PCI<PCI_SLOT_LIST ID>_VF_TRUST_LIST="on[,off...]"
+
+  Default is 'off'
+
 * Set custom unique name for VF interface
   
   Must match the number of VFs enabled for the given PCI interface.

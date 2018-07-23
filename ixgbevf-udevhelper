@@ -122,10 +122,12 @@ case "$ACTION" in
 						splog "/sys/module/${DRIVER}/drivers/pci:${DRIVER}/$PCI_SLOT_NAME/sriov_numvfs: $(</sys/module/${DRIVER}/drivers/pci:${DRIVER}/$PCI_SLOT_NAME/sriov_numvfs)"
 					fi
 					VFID=0
+					eval "_TMP=\${PCI${idx}_VF_TRUST_LIST}"
+					VF_TRUST=(${_TMP//,/ })
 					eval "_TMP=\${PCI${idx}_VF_SPOOFCHK_LIST}"
-					_TMP=(${_TMP//,/ })
+					VF_SPOOFCHK=(${_TMP//,/ })
 					while [ $VFID -lt $NUMVFS ]; do
-						pci_vf_SPOOFCHK="${_TMP[VFID]}"
+						pci_vf_SPOOFCHK="${VF_SPOOFCHK[VFID]}"
 						splog "PFNAME:$PFNAME VFID:$VFID pci_vf_SPOOFCHK=$pci_vf_SPOOFCHK"
 						if [ "$pci_vf_SPOOFCHK" != 'on' ] && [ "$pci_vf_SPOOFCHK" != "off" ]; then
 							splog "Warning! $PCI_SLOT_NAME VF=$VFID SPOOFCHK='$pci_vf_SPOOFCHK' must be 'on' or 'off'. Skipping spoof check setup."
@@ -133,6 +135,18 @@ case "$ACTION" in
 							# set VF spoof check
 							ip link set dev "$PFNAME" vf "$VFID" spoofchk "$pci_vf_SPOOFCHK" &>/dev/null
 							splog "ip link set dev $PFNAME vf $VFID spoofchk $pci_vf_SPOOFCHK (ret:$?)" &>/dev/null
+						fi
+						pci_vf_TRUST="${VF_TRUST[VFID]}"
+						splog "PFNAME:$PFNAME VFID:$VFID pci_vf_TRUST=$pci_vf_TRUST"
+						if [ "$pci_vf_TRUST" != 'on' ] && [ "$pci_vf_TRUST" != "off" ]; then
+							splog "Warning! $PCI_SLOT_NAME VF=$VFID TRUST='$pci_vf_TRUST' must be 'on' or 'off'. Skipping VF trust setup."
+						else
+							# set VF trust
+							if ip link set dev "$PFNAME" vf "$VFID" trust "$pci_vf_TRUST" &>/dev/null; then
+								splog "ip link set dev $PFNAME vf $VFID trust $pci_vf_TRUST" &>/dev/null
+							else
+								splog "ip link set dev $PFNAME vf $VFID trust $pci_vf_TRUST (soft fail)" &>/dev/null
+							fi
 						fi
 						((VFID=VFID+1))
 					done
