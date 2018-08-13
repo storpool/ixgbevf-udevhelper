@@ -126,6 +126,8 @@ case "$ACTION" in
 					VF_TRUST=(${_TMP//,/ })
 					eval "_TMP=\${PCI${idx}_VF_SPOOFCHK_LIST}"
 					VF_SPOOFCHK=(${_TMP//,/ })
+					eval "_TMP=\${PCI${idx}_VF_RANDMAC_LIST}"
+					VF_RANDMAC=(${_TMP//,/ })
 					while [ $VFID -lt $NUMVFS ]; do
 						pci_vf_SPOOFCHK="${VF_SPOOFCHK[VFID]}"
 						splog "PFNAME:$PFNAME VFID:$VFID pci_vf_SPOOFCHK=$pci_vf_SPOOFCHK"
@@ -146,6 +148,20 @@ case "$ACTION" in
 								splog "ip link set dev $PFNAME vf $VFID trust $pci_vf_TRUST" &>/dev/null
 							else
 								splog "ip link set dev $PFNAME vf $VFID trust $pci_vf_TRUST (soft fail)" &>/dev/null
+							fi
+						fi
+						pci_vf_RANDMAC="${VF_RANDMAC[VFID]}"
+						splog "PFNAME:$PFNAME VFID:$VFID pci_vf_RANDMAC=$pci_vf_RANDMAC"
+						if [ "$pci_vf_RANDMAC" != 'on' ] && [ "$pci_vf_RANDMAC" != "off" ]; then
+							splog "Warning! $PCI_SLOT_NAME VF=$VFID RANDMAC='$pci_vf_RANDMAC' must be 'on' or 'off'. Skipping VF random mac setup."
+						else
+							# set VF random mac address
+							printf -v RANDMAC "00:%02X:%02X:%02X:%02X:%02X" "$idx" "$VFID" \
+												$((RANDOM%256)) $((RANDOM%256)) $((RANDOM%256))
+							if ip link set dev "$PFNAME" vf "$VFID" mac "$RANDMAC" &>/dev/null; then
+								splog "ip link set dev $PFNAME vf $VFID mac $RANDMAC" &>/dev/null
+							else
+								splog "ip link set dev $PFNAME vf $VFID mac $RANDMAC (soft fail)" &>/dev/null
 							fi
 						fi
 						((VFID=VFID+1))
