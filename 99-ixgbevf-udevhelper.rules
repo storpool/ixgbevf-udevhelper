@@ -26,8 +26,12 @@
 #
 
 #SUBSYSTEM=="pci",ACTION=="add",DRIVERS=="ixgbe",RUN+="/lib/udev/ixgbevf-udevhelper"
+ENV{ID_BUS}=="pci",ACTION=="add",DRIVERS=="ixgbe",ENV{NM_UNMANAGED}="1"
 ENV{ID_BUS}=="pci",ACTION=="add",DRIVERS=="ixgbe",RUN+="/lib/udev/ixgbevf-udevhelper"
+SUBSYSTEM=="net",ACTION=="add",DRIVERS=="ixgbevf",ENV{NM_UNMANAGED}="1"
 SUBSYSTEM=="net",ACTION=="add",DRIVERS=="ixgbevf",PROGRAM=="/lib/udev/ixgbevf-udevhelper",RESULT=="?*",NAME="%c"
 
+ENV{ID_BUS}=="pci",ACTION=="add",DRIVERS=="i40e",ENV{NM_UNMANAGED}="1"
 ENV{ID_BUS}=="pci",ACTION=="add",DRIVERS=="i40e",RUN+="/lib/udev/ixgbevf-udevhelper"
+SUBSYSTEM=="net",ACTION=="add",DRIVERS=="i40evf",ENV{NM_UNMANAGED}="1"
 SUBSYSTEM=="net",ACTION=="add",DRIVERS=="i40evf",PROGRAM=="/lib/udev/ixgbevf-udevhelper",RESULT=="?*",NAME="%c"
